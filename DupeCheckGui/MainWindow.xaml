@@ -1,0 +1,51 @@
+﻿<Window x:Class="DupeCheckGui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DupeCheckGui"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+
+    <Border Padding="10">
+
+        <Grid Drop="LoadJson_Drop" AllowDrop="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ListView Grid.Column="0" x:Name="lViewHash" SelectionChanged="lViewHash_SelectionChanged" />
+
+            <ListView Grid.Column="1" x:Name="lViewFiles" />
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="2*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Button Grid.Row="0" 
+                    Click="BtnOpen_Click"
+                    Content="Open"
+                    Margin="10 0"
+                    FontWeight="Bold"
+                    FontSize="25" />
+                
+                <Button Grid.Row="2" 
+                    Click="BtnDelete_Click"
+                    Content="Delete"
+                    Margin="10 0"
+                    Background="Red"
+                    FontWeight="Bold" 
+                    FontSize="25" />
+            </Grid>
+            
+        </Grid>
+        
+    </Border>
+    
+
+</Window>
