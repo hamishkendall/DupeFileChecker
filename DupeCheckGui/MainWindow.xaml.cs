@@ -103,9 +103,12 @@ namespace DupeCheckGui
         {
             this.lViewFiles.Items.Clear();
 
-            foreach (DupeFile f in listDupeFiles[(string)lViewHash.SelectedItem])
+            if((string)lViewHash.SelectedItem != null)
             {
-                this.lViewFiles.Items.Add(f.Path);
+                foreach (DupeFile f in listDupeFiles[(string)lViewHash.SelectedItem])
+                {
+                    this.lViewFiles.Items.Add(f.Path);
+                }
             }
         }
 
@@ -171,6 +174,22 @@ namespace DupeCheckGui
         private void RemoveFileFromList(int index)
         {
             listDupeFiles[(string)lViewHash.SelectedItem].RemoveAt(index);
+            RemoveHashFromList();
         }
+
+        private void RemoveHashFromList()
+        {
+            string selectedHash = (string)lViewHash.SelectedItem;
+
+            if (listDupeFiles[selectedHash].Count == 0)
+            {
+                listDupeFiles.Remove(selectedHash);
+                listHash.Remove(selectedHash);
+
+                UpdateHashView();
+                lViewHash.SelectedIndex = 0;
+            }
+        }
+
     }
 }
