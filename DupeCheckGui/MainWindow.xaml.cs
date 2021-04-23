@@ -36,6 +36,104 @@ namespace DupeCheckGui
             InitializeComponent();
         }
 
+        private void lViewHash_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateFileListView();
+        }
+
+        private void BtnOpen_Click(object sender, RoutedEventArgs e)
+        {
+            int fileIndex = this.lViewFiles.SelectedIndex;
+
+            if (fileIndex >= 0)
+            {
+                string filePath = (string)this.lViewFiles.SelectedItem;
+
+                Process p = new Process();
+                p.StartInfo = new ProcessStartInfo()
+                {
+                    UseShellExecute = true,
+                    FileName = filePath
+                };
+                try
+                {
+                    p.Start();
+                }
+                catch (Exception)
+                {
+                    RemoveFileFromList(fileIndex);
+                    MessageBox.Show("File does not exist - Removed File from list");
+                }
+            }
+        }
+
+        private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            string filePath = (string)this.lViewFiles.SelectedItem;
+            int selectedIndex = this.lViewFiles.SelectedIndex;
+
+            if(selectedIndex >= 0)
+            {
+                if (File.Exists(filePath))
+                {
+                    Process.Start("explorer.exe", "/select," + filePath);
+                }
+                else
+                {
+                    RemoveFileFromList(selectedIndex);
+                }
+            }
+        }
+
+        private void BtnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (listDupeFiles != null)
+            {
+                string savePath = CreateSaveFile();
+
+                if (!String.IsNullOrWhiteSpace(savePath))
+                {
+                    using (StreamWriter file = File.CreateText(savePath))
+                    {
+                        file.WriteLine(JsonConvert.SerializeObject(listDupeFiles, Formatting.Indented));
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Save Aborted");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Nothing to save");
+            }
+        }
+
+        private void BtnDelete_Click(object sender, RoutedEventArgs e)
+        {
+
+            string filePath = (string)this.lViewFiles.SelectedItem;
+            int fileIndex = this.lViewFiles.SelectedIndex;
+
+            if (fileIndex >= 0)
+            {
+                MessageBoxResult mbr = System.Windows.MessageBox.Show($"Delete: {filePath} ?", "Delete Confirmation", System.Windows.MessageBoxButton.YesNo);
+                if (mbr == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        FileSystem.DeleteFile(filePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("File does not exist - Removed File from list");
+                    }
+
+                    RemoveFileFromList(fileIndex);
+                }
+            }
+        }
+
         private void LoadJson_Drop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -113,89 +211,6 @@ namespace DupeCheckGui
             }
         }
 
-        private void lViewHash_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            UpdateFileListView();
-        }
-
-        private void BtnOpen_Click(object sender, RoutedEventArgs e)
-        {
-            int fileIndex = this.lViewFiles.SelectedIndex;
-
-            if (fileIndex >= 0)
-            {
-                string filePath = (string)this.lViewFiles.SelectedItem;
-
-                Process p = new Process();
-                p.StartInfo = new ProcessStartInfo()
-                {
-                    UseShellExecute = true,
-                    FileName = filePath
-                };
-                try
-                {
-                    p.Start();
-                }
-                catch (Exception)
-                {
-                    RemoveFileFromList(fileIndex);
-                    MessageBox.Show("File does not exist - Removed File from list");
-                    UpdateFileListView();
-                }
-            }
-        }
-
-        private void BtnDelete_Click(object sender, RoutedEventArgs e)
-        {
-
-            string filePath = (string)this.lViewFiles.SelectedItem;
-            int fileIndex = this.lViewFiles.SelectedIndex;
-
-            if(fileIndex >= 0)
-            {
-                MessageBoxResult mbr = System.Windows.MessageBox.Show($"Delete: {filePath} ?", "Delete Confirmation", System.Windows.MessageBoxButton.YesNo);
-                if (mbr == MessageBoxResult.Yes)
-                {
-                    try
-                    {
-                        FileSystem.DeleteFile(filePath, UIOption.AllDialogs, RecycleOption.SendToRecycleBin);
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show("File does not exist - Removed File from list");
-                    }
-
-                    RemoveFileFromList(fileIndex);
-                }
-
-                UpdateFileListView();
-            }
-        }
-
-        private void BtnSave_Click(object sender, RoutedEventArgs e)
-        {
-            if(listDupeFiles != null)
-            {
-                string savePath = CreateSaveFile();
-
-                if (!String.IsNullOrWhiteSpace(savePath))
-                {
-                    using (StreamWriter file = File.CreateText(savePath))
-                    {
-                        file.WriteLine(JsonConvert.SerializeObject(listDupeFiles, Formatting.Indented));
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Save Aborted");
-                }
-            }
-            else
-            {
-                MessageBox.Show("Nothing to save");
-            }
-        }
-
         private static string CreateSaveFile()
         {
             SaveFileDialog save = new SaveFileDialog();
@@ -219,22 +234,25 @@ namespace DupeCheckGui
         private void RemoveFileFromList(int index)
         {
             listDupeFiles[(string)lViewHash.SelectedItem].RemoveAt(index);
-            RemoveHashFromList();
-        }
+            UpdateFileListView();
 
-        private void RemoveHashFromList()
-        {
             string selectedHash = (string)lViewHash.SelectedItem;
-
             if (listDupeFiles[selectedHash].Count == 0)
             {
-                listDupeFiles.Remove(selectedHash);
-                listHash.Remove(selectedHash);
-
-                UpdateHashView();
-                lViewHash.SelectedIndex = 0;
+                RemoveHashFromList(selectedHash);
             }
         }
+
+        private void RemoveHashFromList(string hash)
+        {
+            listDupeFiles.Remove(hash);
+            listHash.Remove(hash);
+
+            UpdateHashView();
+            MessageBox.Show("Hash is now empty - Removing");
+            lViewHash.SelectedIndex = 0;
+        }
+
 
     }
 }

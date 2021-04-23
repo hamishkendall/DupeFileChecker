@@ -16,15 +16,21 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <ListView Grid.Column="0" x:Name="lViewHash" SelectionChanged="lViewHash_SelectionChanged" />
+            <ListView Grid.Column="0"
+                      x:Name="lViewHash"
+                      SelectionChanged="lViewHash_SelectionChanged"
+                      SelectionMode="Single" />
 
-            <ListView Grid.Column="1" x:Name="lViewFiles" />
+            <ListView Grid.Column="1"
+                      x:Name="lViewFiles"
+                      SelectionMode="Single" />
 
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="2*" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="2*" />
                 </Grid.RowDefinitions>
 
                 <Button Grid.Row="0" 
@@ -32,22 +38,29 @@
                     Content="Open"
                     Margin="10"
                     FontWeight="Bold"
-                    FontSize="25" />
+                    FontSize="20" />
 
                 <Button Grid.Row="1" 
-                    Click="BtnSave_Click"
-                    Content="Save"
-                    Margin="10 40"
+                    Click="BtnOpenFolder_Click"
+                    Content="Open Folder"
+                    Margin="10"
                     FontWeight="Bold"
-                    FontSize="25" />
+                    FontSize="20" />
 
                 <Button Grid.Row="2" 
+                    Click="BtnSave_Click"
+                    Content="Save"
+                    Margin="10"
+                    FontWeight="Bold"
+                    FontSize="20" />
+
+                <Button Grid.Row="3" 
                     Click="BtnDelete_Click"
                     Content="Delete"
                     Margin="10"
                     Background="Red"
                     FontWeight="Bold" 
-                    FontSize="25" />
+                    FontSize="20" />
             </Grid>
             
         </Grid>
