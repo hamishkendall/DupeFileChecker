@@ -14,7 +14,8 @@ namespace DupeFileCheck
 
         static void Main(string[] args)
         {
-            string path = @"C:\Test\";
+            Console.WriteLine("Please enter the filepath to scan");
+            string path = Console.ReadLine();
             SearchAllFiles(path);
         }
 
