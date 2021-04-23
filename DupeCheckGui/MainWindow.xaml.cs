@@ -1,5 +1,6 @@
 ﻿using DupeFileCheck.Context;
 using Microsoft.VisualBasic.FileIO;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -169,6 +170,50 @@ namespace DupeCheckGui
 
                 UpdateFileListView();
             }
+        }
+
+        private void BtnSave_Click(object sender, RoutedEventArgs e)
+        {
+            if(listDupeFiles != null)
+            {
+                string savePath = CreateSaveFile();
+
+                if (!String.IsNullOrWhiteSpace(savePath))
+                {
+                    using (StreamWriter file = File.CreateText(savePath))
+                    {
+                        file.WriteLine(JsonConvert.SerializeObject(listDupeFiles, Formatting.Indented));
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Save Aborted");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Nothing to save");
+            }
+        }
+
+        private static string CreateSaveFile()
+        {
+            SaveFileDialog save = new SaveFileDialog();
+            save.FileName = "Duplicates";
+            save.DefaultExt = ".json";
+            save.Filter = "Json File (.json)|*.json";
+
+            Nullable<bool> result = save.ShowDialog();
+
+            if(result == true)
+            {
+                FileStream file = File.Create(save.FileName);
+                file.Close();
+
+                return save.FileName;
+            }
+
+            return "";
         }
 
         private void RemoveFileFromList(int index)
