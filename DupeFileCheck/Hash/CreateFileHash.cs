@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -19,15 +17,16 @@ namespace DupeFileCheck.DirHash
             }
         }
 
-        private static string GetMd5Hash(MD5 md5Hash, FileStream input)
+        //Converts file to md5 hash
+        private static string GetMd5Hash(MD5 md5Hash, FileStream file)
         {
-            byte[] data = md5Hash.ComputeHash(input);
-            StringBuilder sBuilder = new StringBuilder();
+            byte[] data = md5Hash.ComputeHash(file);
+            StringBuilder strBuilder = new StringBuilder();
             for (int i = 0; i < data.Length; i++)
             {
-                sBuilder.Append(data[i].ToString("x2"));
+                strBuilder.Append(data[i].ToString("x2"));
             }
-            return sBuilder.ToString();
+            return strBuilder.ToString();
         }
     }
 }

@@ -2,14 +2,17 @@
 using DupeFileCheck.DirHash;
 using DupeFileCheck.Logger;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DupeFileCheck.Scan
 {
     public class DirScan
     {
+        #region Non-Parallel
         //Searches Dir and Sub Dir only keeping track of files in a single list
         public static List<DupeFile> SearchAllFiles(string dir)
         {
@@ -17,18 +20,28 @@ namespace DupeFileCheck.Scan
             Search(dir, retList);
             return retList;
         }
+
+        //Creates a list of all files within a directory
         private static void Search(string dir, List<DupeFile> files)
         {
+            FileInfo curFile;
+
             try
             {
                 foreach (string f in Directory.GetFiles(dir))
                 {
-                    files.Add(new DupeFile()
+                    curFile = new FileInfo(f);
+
+                    if (IsFileReadable(f))
                     {
-                        Name = f.Replace($@"{dir}{Path.DirectorySeparatorChar}", ""),
-                        Path = f,
-                        Hash = CreateFileHash.GetHash(f)
-                    });
+                        files.Add(new DupeFile()
+                        {
+                            Name = curFile.Name,
+                            Path = curFile.FullName,
+                            Extension = curFile.Extension,
+                            Hash = CreateFileHash.GetHash(f)
+                        });
+                    }
                 }
 
                 foreach (string d in Directory.GetDirectories(dir))
@@ -42,85 +55,81 @@ namespace DupeFileCheck.Scan
             }
         }
 
-
-        //Searches the Dir and Sub Dir creating a file list for each dir
-        public static DupeTree SearchDirAndSubDirTree(string rootDir)
+        private static bool IsFileReadable(string filePath)
         {
-            DupeTree tree = new DupeTree();
-            Console.WriteLine("Starting Scan");
-            SearchTreeKeepStructure(rootDir, tree);
-            return tree;
-        }
-        private static void SearchTreeKeepStructure(string dir, DupeTree tree)
-        {
-            foreach (string f in Directory.GetFiles(dir))
+            try
             {
-                tree.Files.Add(new DupeFile()
+                using(FileStream stream = File.OpenRead(filePath))
                 {
-                    Name = f.Replace(dir, ""),
-                    Path = f
-                    //Hash = CreateFileHash.GetHash(f)
-                }) ;
+                    stream.Close();
+                }
             }
-            Console.WriteLine($"Added {tree.Files.Count} Root Files from {dir}");
-
-            foreach (string d in Directory.GetDirectories(dir))
+            catch (Exception e)
             {
-                tree.Folders.Add(new DupeFolder()
+                CustomLogger.LogError(e);
+                return false;
+            }
+
+            return true;
+        }
+        #endregion
+
+        #region Parallel
+        public static List<DupeFile> SearchAllFilesParallel(string dir)
+        {
+            ConcurrentBag<DupeFile> retList = new ConcurrentBag<DupeFile>();
+            SearchParallel(dir, retList);
+            return retList.ToList<DupeFile>();
+        }
+
+        private static void SearchParallel(string dir, ConcurrentBag<DupeFile> files)
+        {
+            try
+            {
+                Parallel.ForEach(Directory.GetFiles(dir), f =>
                 {
-                    Path = d,
-                    FileList = GetSubDirFiles(d),
-                    SubFolderList = GetSubDirFolders(d)
+                    FileInfo curFile = new FileInfo(f);
+
+                    if (IsFileReadableParallel(f))
+                    {
+                        files.Add(new DupeFile()
+                        {
+                            Name = curFile.Name,
+                            Path = curFile.FullName,
+                            Extension = curFile.Extension,
+                            Hash = CreateFileHash.GetHash(f)
+                        });
+                    }
+                });
+
+                Parallel.ForEach(Directory.GetDirectories(dir), d =>
+                {
+                    SearchParallel(d, files);
                 });
             }
-            Console.WriteLine($"Added {tree.Folders.Count} Root Folders from {dir}");
-        }
-        private static List<DupeFile> GetSubDirFiles(string dir)
-        {
-            List<DupeFile> retFiles = new List<DupeFile>();
-            try
-            {
-                foreach(string f in Directory.GetFiles(dir))
-                {
-                    Console.WriteLine($"Added File {f}");
-                    retFiles.Add(new DupeFile()
-                    {
-                        Name = f.Replace(dir + @"\", ""),
-                        Path = f
-                        //Hash = CreateFileHash.GetHash(f)
-                    });
-                }
-            }
-            catch(UnauthorizedAccessException e)
+            catch (UnauthorizedAccessException e)
             {
                 CustomLogger.LogError(e);
             }
-            Console.WriteLine($"Added {retFiles.Count} Sub Files from {dir}");
-            return retFiles;
         }
-        private static List<DupeFolder> GetSubDirFolders(string dir)
+        
+        private static bool IsFileReadableParallel(string filePath)
         {
-            List<DupeFolder> retFolders = new List<DupeFolder>();
             try
             {
-                foreach(string d in Directory.GetDirectories(dir))
+                using (FileStream stream = File.OpenRead(filePath))
                 {
-                    Console.WriteLine($"Added Folder {d}");
-                    retFolders.Add(new DupeFolder()
-                    {
-                        Path = d,
-                        FileList = GetSubDirFiles(d),
-                        SubFolderList = GetSubDirFolders(d)
-                    });
+                    stream.Close();
                 }
             }
-            catch(UnauthorizedAccessException e)
+            catch (Exception e)
             {
                 CustomLogger.LogError(e);
+                return false;
             }
-            Console.WriteLine($"Added {retFolders.Count} Sub Folders in {dir}");
-            return retFolders;
-        }
 
+            return true;
+        }
+        #endregion
     }
 }
