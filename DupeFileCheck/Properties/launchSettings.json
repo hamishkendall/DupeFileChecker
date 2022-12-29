@@ -1,8 +1,7 @@
 {
   "profiles": {
     "DupeFileCheck": {
-      "commandName": "Project",
-      "commandLineArgs": "C:/TestEnv n"
+      "commandName": "Project"
     }
   }
 }
